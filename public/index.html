@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>AI + Human Chat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f4f6f8;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      height: 100vh;
+    }
+
+    .chat-container {
+      background: #fff;
+      width: 100%;
+      max-width: 600px;
+      margin-top: 40px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .chat-messages {
+      padding: 20px;
+      flex: 1;
+      overflow-y: auto;
+      height: 70vh;
+      scroll-behavior: smooth;
+    }
+
+    .message {
+      margin-bottom: 12px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .from-user {
+      align-items: flex-end;
+    }
+
+    .from-ai,
+    .from-agent,
+    .from-system {
+      align-items: flex-start;
+    }
+
+    .bubble {
+      padding: 12px 16px;
+      border-radius: 18px;
+      max-width: 80%;
+      line-height: 1.5;
+      word-wrap: break-word;
+    }
+
+    .bubble-user {
+      background-color: #007aff;
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+
+    .bubble-ai {
+      background-color: #e6f0ff;
+      color: #333;
+      border-bottom-left-radius: 4px;
+    }
+
+    .bubble-agent {
+      background-color: #f0f8e2;
+      color: #2b631c;
+      border-bottom-left-radius: 4px;
+    }
+
+    .bubble-system {
+      background-color: #f6f6f6;
+      color: #888;
+      font-style: italic;
+      border-bottom-left-radius: 4px;
+    }
+
+    .chat-input {
+      display: flex;
+      border-top: 1px solid #eee;
+      padding: 12px;
+      background: #fff;
+    }
+
+    .chat-input input {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1px solid #ddd;
+      border-radius: 20px;
+      outline: none;
+      font-size: 14px;
+    }
+
+    .chat-input button {
+      margin-left: 10px;
+      background-color: #007aff;
+      border: none;
+      color: white;
+      padding: 10px 18px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .chat-input button:hover {
+      background-color: #005fcc;
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <div id="chat" class="chat-messages"></div>
+    <div class="chat-input">
+      <input id="input" type="text" placeholder="Type your message..." onkeydown="if(event.key==='Enter') sendMessage()" />
+      <button onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+
+  <script>
+    const userId = "user123"; // static user for demo
+
+    async function fetchMessages() {
+      const res = await fetch(`/messages/${userId}`);
+      const messages = await res.json();
+
+      const chat = document.getElementById("chat");
+      chat.innerHTML = "";
+
+      messages.forEach(m => {
+        const div = document.createElement("div");
+        div.classList.add("message");
+
+        let bubble = document.createElement("div");
+        bubble.classList.add("bubble");
+
+        if (m.from === "user") {
+          div.classList.add("from-user");
+          bubble.classList.add("bubble-user");
+        } else if (m.from === "AI") {
+          div.classList.add("from-ai");
+          bubble.classList.add("bubble-ai");
+        } else if (m.from === "agent") {
+          div.classList.add("from-agent");
+          bubble.classList.add("bubble-agent");
+        } else {
+          div.classList.add("from-system");
+          bubble.classList.add("bubble-system");
+        }
+
+        bubble.innerText = m.text;
+        div.appendChild(bubble);
+        chat.appendChild(div);
+      });
+
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    async function sendMessage() {
+      const input = document.getElementById("input");
+      const text = input.value.trim();
+      if (!text) return;
+
+      input.value = "";
+
+      await fetch("/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, message: text })
+      });
+
+      fetchMessages();
+    }
+
+    setInterval(fetchMessages, 2000);
+    fetchMessages();
+  </script>
+</body>
+</html>
